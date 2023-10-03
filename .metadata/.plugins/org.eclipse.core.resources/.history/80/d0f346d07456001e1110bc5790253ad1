@@ -1,0 +1,127 @@
+package com.shopme.admin.user;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.test.annotation.Rollback;
+
+import com.shopme.common.entity.Role;
+import com.shopme.common.entity.User;
+
+@DataJpaTest
+@AutoConfigureTestDatabase(replace = Replace.NONE)
+@Rollback(false)
+public class UserRepositoryTest {
+	
+	@Autowired
+	private UserRepository repo;
+	
+	@Autowired
+	private TestEntityManager entityManager;
+	
+	/// CON ESTOS METODOS CREAMOS UN USUARIO DIRECTAMENTE EN LA BASE DE DATOS Y LE AGREGAMOS EL ROL SIN NECESIDA 
+	/// HACERLO DIRECTAMENTE EN LA BASE DE DATOS
+	
+	@Test
+	public void testCreateUser() {
+		Role roleAdmin = entityManager.find(Role.class, 1);
+		User userGusti = new User("telecabinasaltasuiza@gmail.com", "gustavo", "superlango","123456789");
+		
+		userGusti.addRole(roleAdmin);
+		 /// POR EL MOMENTO CREAMOS LOS USUARIOS MANUALMENTE
+		User saveUser = repo.save(userGusti);
+		assertThat(saveUser.getId()).isGreaterThan(0);
+		
+	}
+	
+	@Test
+	public void testCreateNewUserWithTwoRole() {
+		
+		 /// POR EL MOMENTO CREAMOS LOS USUARIOS MANUALMENTE con dos roles
+		User userFrancy = new User("francy@gmail.com", "francy", "munoz", "123456789");
+		
+		Role roleEditor = new Role(3);
+		Role roleAssistant= new Role(5);
+		
+		userFrancy.addRole(roleEditor);
+		userFrancy.addRole(roleAssistant);
+		
+		User saveUser = repo.save(userFrancy);
+		assertThat(saveUser.getId()).isGreaterThan(0);
+		
+	}
+	
+	/// ahora creamo un metodo para traser todos los usuraios de la base de datos
+	@Test
+	public void testListAllUsers() {
+		Iterable<User> listUsers = repo.findAll();
+		
+		listUsers.forEach(user -> System.out.println(user));
+				
+	}
+	
+	/// busrcar usuario por id
+	@Test
+	public void testGetUserById() {
+		
+		User userGusti = repo.findById(1).get();
+		System.out.println(userGusti);
+		assertThat(userGusti).isNotNull();
+	}
+	/// hcaemos un metodo para update al user
+	
+	@Test
+	public void testUpdateUserDetails() {
+		User userGusti = repo.findById(1).get();
+		/// cambiamos el estado de Enabled que estaba en false a true
+		
+		userGusti.setEnabled(true);
+		userGusti.setEmail("gusti@gmail.com");
+		
+		repo.save(userGusti);
+		
+		
+	}
+	
+	/// creamos un metodo para actualizar el role
+	
+	@Test
+	public void testUpdateUserRoles(){
+		
+		User userFrancy = repo.findById(2).get();
+		
+		Role roleEditor = new Role(3);
+		Role roleSalesperson = new Role(2);
+		
+		userFrancy.getRoles().remove(roleEditor);  /// aca le quitamos el rol de editor
+		userFrancy.addRole(roleSalesperson); /// aca le agregamos el rol de Salesperson
+		
+		
+		repo.save(userFrancy);
+		
+	}
+	
+	/// metodo para eliminar un usuario
+	
+	@Test
+	public void testDeleteUser() {
+		
+		Integer userId = 2;
+		repo.deleteById(userId);
+		
+	}
+	
+	@Test
+	public void testGetUserByEmail() {
+		String email = "prueba@email.com";
+		}
+	
+
+}
